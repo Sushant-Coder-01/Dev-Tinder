@@ -1,0 +1,14 @@
+{
+  "name": "dev-tinder-server",
+  "version": "1.0.0",
+  "description": "This is a dev tinder server",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sushant Mangore",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

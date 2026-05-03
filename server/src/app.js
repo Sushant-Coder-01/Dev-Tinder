@@ -2,43 +2,32 @@ const express = require("express");
 
 const app = express();
 
-app.get("/test", (req, res) => {
-  res.send("Hello test!");
-});
+app.use("/user", [
+  (req, res, next) => {
+    // Route handler 1
+    console.log("This is the user route handler 1");
+    next();
+  },
+  (req, res, next) => {
+    // Route handler 2
+    console.log("This is the user route handler 2");
+    // res.send("This is route handler 2");
+    next();
+  },
+  (req, res, next) => {
+    // Route handler 2
+    console.log("This is the user route handler 3");
+    // res.send("This is route handler 3");
+    next();
+  },
+  (req, res, next) => {
+    // Route handler 2
+    console.log("This is the user route handler 4");
+    // res.send("This is route handler 4");
+    next();
+  },
+]);
 
 app.listen("3000", () => {
   console.log("Server is started successfully on port 3000...");
-});
-
-app.get("/user", (req, res) => {
-  const queryParams = req.query;
-  console.log(queryParams);
-  const user = {
-    name: "Sushant Mangore",
-    age: 24,
-    profession: "Software Engineer",
-  };
-  res.send(user);
-});
-
-app.post("/user", (req, res) => {
-  const user = {
-    name: "Sushant Mangore",
-    age: 24,
-    profession: "Software Engineer",
-  };
-  res.send(`User ${user.name} created successfully!`);
-});
-
-app.delete("/user", (req, res) => {
-  const user = {
-    name: "Sushant Mangore",
-    age: 24,
-    profession: "Software Engineer",
-  };
-  res.send(`User ${user.name} deleted successfully!`);
-});
-
-app.get("/", (req, res) => {
-  res.send("Hello this is home page!");
 });

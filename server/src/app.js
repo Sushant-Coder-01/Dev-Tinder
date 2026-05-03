@@ -11,6 +11,8 @@ app.listen("3000", () => {
 });
 
 app.get("/user", (req, res) => {
+  const queryParams = req.query;
+  console.log(queryParams);
   const user = {
     name: "Sushant Mangore",
     age: 24,

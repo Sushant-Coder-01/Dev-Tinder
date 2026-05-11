@@ -1,6 +1,25 @@
 const express = require("express");
 const connectDB = require("./config/database");
+const User = require("./models/user");
 const app = express();
+require("dotenv").config();
+
+app.post("/signup", async (req, res) => {
+  const userData = {
+    firstName: "Sushant",
+    lastName: "Mangore",
+    age: 25,
+  };
+  const user = new User(userData);
+
+  try {
+    await user.save();
+
+    res.send("User Added Successfully!");
+  } catch (error) {
+    res.status(400).send("Error saving the user: " + error.message);
+  }
+});
 
 connectDB()
   .then(() => {

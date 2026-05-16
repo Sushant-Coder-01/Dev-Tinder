@@ -4,21 +4,38 @@ const User = require("./models/user");
 const app = express();
 require("dotenv").config();
 
+app.use(express.json());
+
 app.post("/signup", async (req, res) => {
-  const userData = {
-    firstName: "Sushant",
-    lastName: "Mangore",
-    age: 25,
-  };
-  const user = new User(userData);
+  let body = "";
 
-  try {
-    await user.save();
+  // recive chunks
+  req.on("data", (chunks) => {
+    body += chunks;
+  });
 
-    res.send("User Added Successfully!");
-  } catch (error) {
-    res.status(400).send("Error saving the user: " + error.message);
-  }
+  req.on("end", () => {
+    if (body) {
+      req.body = JSON.parse(body);
+    }
+    console.log(req.body);
+    res.send(1);
+  });
+
+  // const userData = {
+  //   firstName: "Sushant",
+  //   lastName: "Mangore",
+  //   age: 25,
+  // };
+  // const user = new User(userData);
+
+  // try {
+  //   await user.save();
+
+  //   res.send("User Added Successfully!");
+  // } catch (error) {
+  //   res.status(400).send("Error saving the user: " + error.message);
+  // }
 });
 
 connectDB()

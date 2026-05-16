@@ -76,7 +76,9 @@ app.patch("/user/:userId", async (req, res) => {
       return res.status(400).send("Invalid updates!");
     }
 
-    await User.findByIdAndUpdate(userId, data);
+    await User.findByIdAndUpdate(userId, data, {
+      runValidators: true,
+    });
     res.send("User updated Successfully.");
   } catch (error) {
     res.status(400).send("Error while updating the user: ", error);

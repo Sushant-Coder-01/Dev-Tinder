@@ -7,35 +7,15 @@ require("dotenv").config();
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-  let body = "";
+  const user = new User(userData);
 
-  // recive chunks
-  req.on("data", (chunks) => {
-    body += chunks;
-  });
+  try {
+    await user.save();
 
-  req.on("end", () => {
-    if (body) {
-      req.body = JSON.parse(body);
-    }
-    console.log(req.body);
-    res.send(1);
-  });
-
-  // const userData = {
-  //   firstName: "Sushant",
-  //   lastName: "Mangore",
-  //   age: 25,
-  // };
-  // const user = new User(userData);
-
-  // try {
-  //   await user.save();
-
-  //   res.send("User Added Successfully!");
-  // } catch (error) {
-  //   res.status(400).send("Error saving the user: " + error.message);
-  // }
+    res.send("User Added Successfully!");
+  } catch (error) {
+    res.status(400).send("Error saving the user: " + error.message);
+  }
 });
 
 connectDB()

@@ -9,6 +9,7 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 
 const User = require("./models/user");
+const { userAuth } = require("./middlewares/auth");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -68,27 +69,9 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/profile", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const cookies = req.cookies;
-
-    const { token } = cookies;
-
-    if (!token) {
-      throw new Error("Invalid token!");
-    }
-
-    //verify the token
-    const decodedMessage = jwt.verify(token, process.env.JWT_SECRET);
-
-    const { _id } = decodedMessage;
-
-    const user = await User.find({ _id });
-
-    if (!user) {
-      throw new Error("User does not exist!");
-    }
-
+    const user = req.user;
     res.send(user);
   } catch (error) {
     res.status(400).send("Error : " + error.message);

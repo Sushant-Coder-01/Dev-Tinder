@@ -79,7 +79,7 @@ app.get("/profile", async (req, res) => {
     }
 
     //verify the token
-    const decodedMessage = jwt.verify(token, "Sush@DevTinder#123");
+    const decodedMessage = jwt.verify(token, process.env.JWT_SECRET);
 
     const { _id } = decodedMessage;
 

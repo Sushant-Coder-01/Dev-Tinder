@@ -16,14 +16,12 @@ app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
   try {
-    // validate the data
     const userData = req.body;
 
     validateSignUpData(userData);
 
     const { firstName, lastName, emailId, password } = userData;
 
-    // encrypt the password
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = new User({
@@ -77,73 +75,6 @@ app.get("/profile", userAuth, async (req, res) => {
     res.send(user);
   } catch (error) {
     res.status(400).send("Error : " + error.message);
-  }
-});
-
-// Get user from the email
-app.get("/user", async (req, res) => {
-  const userEmail = req.body.emailId;
-  try {
-    const user = await User.find({ emailId: userEmail });
-
-    if (user.length === 0) {
-      res.status(404).send("User not found!");
-    }
-
-    res.send(user);
-  } catch (error) {
-    res.status(400).send("Error while get the user: ", error);
-  }
-});
-
-// Feed API, get all the users from the database.
-app.get("/feed", async (req, res) => {
-  try {
-    const users = await User.find({});
-
-    if (users.length === 0) {
-      res.status(404).send("No user exists!");
-    }
-
-    res.send(users);
-  } catch (error) {
-    res.status(400).send("Error while get all the users: ", error);
-  }
-});
-
-// Delete a user from the database.
-app.delete("/user", async (req, res) => {
-  try {
-    const userId = req.body.userId;
-    await User.findByIdAndDelete({ _id: userId });
-    // await User.findByIdAndDelete(userId);
-
-    res.send("User deleted Successfully.");
-  } catch (error) {
-    res.status(400).send("Error while deleting the user: ", error);
-  }
-});
-
-// Update data of the user.
-app.patch("/user/:userId", async (req, res) => {
-  const userId = req.params?.userId;
-  console.log("userId: ", userId);
-  const data = req.body;
-  try {
-    const allowedUpdates = ["firstName", "lastName"];
-    const updates = Object.keys(req.body);
-    const isValid = updates.every((key) => allowedUpdates.includes(key));
-
-    if (!isValid) {
-      return res.status(400).send("Invalid updates!");
-    }
-
-    await User.findByIdAndUpdate(userId, data, {
-      runValidators: true,
-    });
-    res.send("User updated Successfully.");
-  } catch (error) {
-    res.status(400).send("Error while updating the user: ", error);
   }
 });
 

@@ -2,7 +2,7 @@ const express = require("express");
 const connectDB = require("./config/database");
 require("dotenv").config();
 
-const { validateSignUpData } = require("./utils/validation");
+const { validateSignUpData, validateLoginData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
 const app = express();
 
@@ -31,6 +31,30 @@ app.post("/signup", async (req, res) => {
 
     await user.save();
     res.send("User Added Successfully!");
+  } catch (error) {
+    res.status(400).send("Error : " + error.message);
+  }
+});
+
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+
+    validateLoginData(req.body);
+
+    const user = await User.findOne({ emailId });
+
+    if (!user) {
+      throw new Error("Invalid Credentials.");
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordCorrect) {
+      throw new Error("Invalid Credentials.");
+    }
+
+    res.send("User Login Successfually!");
   } catch (error) {
     res.status(400).send("Error : " + error.message);
   }

@@ -58,10 +58,15 @@ app.post("/login", async (req, res) => {
       throw new Error("Invalid Credentials.");
     }
 
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
 
     // set a token.
-    res.cookie("token", token);
+    res.cookie("token", token, {
+      httpOnly: true,
+      expires: new Date(Date.now() + 100 * 60),
+    });
 
     res.send("User Login Successfually!");
   } catch (error) {

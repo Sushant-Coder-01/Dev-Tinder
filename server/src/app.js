@@ -57,7 +57,7 @@ app.post("/login", async (req, res) => {
       throw new Error("Invalid Credentials.");
     }
 
-    const token = jwt.sign({ _id: user._id }, "Sush@DevTinder#123");
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
 
     // set a token.
     res.cookie("token", token);

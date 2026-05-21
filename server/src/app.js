@@ -7,12 +7,38 @@ const { validateSignUpData, validateLoginData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const session = require("express-session");
 
 const User = require("./models/user");
 const { userAuth } = require("./middlewares/auth");
+const { connectRedis, redisClient } = require("./config/redis");
+const { RedisStore } = require("connect-redis");
+const { MongoStore } = require("connect-mongo");
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(
+  session({
+    store: new MongoStore({
+      mongoUrl: process.env.MONGO_URI,
+      collectionName: "sessions",
+    }),
+
+    name: "sessionID",
+
+    secret: process.env.SESSION_SECRET,
+
+    resave: false,
+    saveUninitialized: false,
+
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 1000 * 5,
+    },
+  }),
+);
 
 app.post("/signup", async (req, res) => {
   try {
@@ -56,14 +82,33 @@ app.post("/login", async (req, res) => {
       throw new Error("Invalid Credentials.");
     }
 
-    const token = await user.getJWT();
+    console.log("\n========== BEFORE LOGIN ==========");
+    console.log("req.sessionID:", req.sessionID);
+    console.log("req.session:", req.session);
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      expires: new Date(Date.now() + 100 * 60),
+    // REGENERATE SESSION
+    req.session.regenerate((err) => {
+      if (err) {
+        return res.status(500).send("Session regenerate failed");
+      }
+
+      console.log("\n========== AFTER REGENERATE ==========");
+      console.log("NEW sessionID:", req.sessionID);
+
+      req.session.user = {
+        userId: user._id,
+      };
+
+      console.log("\n========== AFTER SETTING USER ==========");
+      console.log("req.session:", req.session);
+
+      res.on("finish", () => {
+        console.log("\nFINAL RESPONSE HEADERS:");
+        console.log(res.getHeaders());
+      });
+
+      res.send("User Login Successfully!");
     });
-
-    res.send("User Login Successfually!");
   } catch (error) {
     res.status(400).send("Error : " + error.message);
   }
@@ -78,8 +123,14 @@ app.get("/profile", userAuth, async (req, res) => {
   }
 });
 
+app.post("/refresh", (req, res) => {
+  res.send("new access token created");
+});
+
 connectDB()
-  .then(() => {
+  .then(async () => {
+    await connectRedis();
+
     console.log("Database connected successfully...");
     app.listen("3000", () => {
       console.log("Server is started successfully on port 3000...");

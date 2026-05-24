@@ -3,12 +3,11 @@ const User = require("../models/user");
 
 const userAuth = async (req, res, next) => {
   try {
-    if (!req.session.user) {
-      throw new Error("Unauthorized!");
-    }
+    const cookies = req.cookies;
+    const { accessToken } = cookies;
+    const decodedPayload = jwt.verify(accessToken, process.env.ACCESS_SECRET);
 
-    const userId = req.session.user.userId;
-
+    const userId = decodedPayload.userId;
     const user = await User.findById(userId);
 
     if (!user) {

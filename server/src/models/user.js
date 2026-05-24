@@ -44,6 +44,26 @@ const userSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+userSchema.methods.generateTokens = function () {
+  const user = this;
+
+  const payload = {
+    userId: user._id,
+  };
+
+  const accessToken = jwt.sign(payload, process.env.ACCESS_SECRET, {
+    expiresIn: "15m",
+    issuer: "devtinder-app",
+  });
+
+  const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET, {
+    expiresIn: "1d",
+    issuer: "devtinder-app",
+  });
+
+  return { accessToken, refreshToken };
+};
+
 userSchema.methods.validatePassword = async function (passwordInputByUser) {
   const user = this;
 

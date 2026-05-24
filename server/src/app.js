@@ -12,33 +12,9 @@ const session = require("express-session");
 const User = require("./models/user");
 const { userAuth } = require("./middlewares/auth");
 const { connectRedis, redisClient } = require("./config/redis");
-const { RedisStore } = require("connect-redis");
-const { MongoStore } = require("connect-mongo");
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(
-  session({
-    store: new MongoStore({
-      mongoUrl: process.env.MONGO_URI,
-      collectionName: "sessions",
-    }),
-
-    name: "sessionID",
-
-    secret: process.env.SESSION_SECRET,
-
-    resave: false,
-    saveUninitialized: false,
-
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 1000 * 5,
-    },
-  }),
-);
 
 app.post("/signup", async (req, res) => {
   try {
@@ -82,33 +58,20 @@ app.post("/login", async (req, res) => {
       throw new Error("Invalid Credentials.");
     }
 
-    console.log("\n========== BEFORE LOGIN ==========");
-    console.log("req.sessionID:", req.sessionID);
-    console.log("req.session:", req.session);
+    const { accessToken, refreshToken } = user.generateTokens();
 
-    // REGENERATE SESSION
-    req.session.regenerate((err) => {
-      if (err) {
-        return res.status(500).send("Session regenerate failed");
-      }
+    const hashedRefreshToken = crypto
+      .createHash("sha256")
+      .update(refreshToken)
+      .digest("hex");
 
-      console.log("\n========== AFTER REGENERATE ==========");
-      console.log("NEW sessionID:", req.sessionID);
+    user.refreshToken = hashedRefreshToken;
+    await user.save();
 
-      req.session.user = {
-        userId: user._id,
-      };
+    res.cookie("accessToken", accessToken, { httpOnly: true });
+    res.cookie("refreshToken", refreshToken, { httpOnly: true });
 
-      console.log("\n========== AFTER SETTING USER ==========");
-      console.log("req.session:", req.session);
-
-      res.on("finish", () => {
-        console.log("\nFINAL RESPONSE HEADERS:");
-        console.log(res.getHeaders());
-      });
-
-      res.send("User Login Successfully!");
-    });
+    res.send("User Login Successfully!");
   } catch (error) {
     res.status(400).send("Error : " + error.message);
   }
@@ -117,14 +80,59 @@ app.post("/login", async (req, res) => {
 app.get("/profile", userAuth, async (req, res) => {
   try {
     const user = req.user;
+
     res.send(user);
   } catch (error) {
     res.status(400).send("Error : " + error.message);
   }
 });
 
-app.post("/refresh", (req, res) => {
-  res.send("new access token created");
+app.post("/refresh", async (req, res) => {
+  try {
+    const cookies = req.cookies;
+    const { refreshToken } = cookies;
+
+    if (!refreshToken) {
+      throw new Error("No refresh token");
+    }
+
+    // 1. Verify JWT first
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+
+    const userId = decoded.userId;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // 3. Hash incoming token
+    const incomingHash = crypto
+      .createHash("sha256")
+      .update(refreshToken)
+      .digest("hex");
+
+    // 4. Compare stored hash
+    if (incomingHash !== user.refreshToken) {
+      throw new Error("Invalid refresh token");
+    }
+
+    // 5. Issue new access token
+    const accessToken = jwt.sign({ userId }, process.env.ACCESS_SECRET, {
+      expiresIn: "15m",
+    });
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+
+    res.send("New access token created");
+  } catch (error) {
+    res.status(400).send("Error : " + error.message);
+  }
 });
 
 connectDB()

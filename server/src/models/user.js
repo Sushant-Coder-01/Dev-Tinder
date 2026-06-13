@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const { env } = require("../config/env.js");
 
 const userSchema = new mongoose.Schema(
   {
@@ -51,12 +52,12 @@ userSchema.methods.generateTokens = function () {
     userId: user._id,
   };
 
-  const accessToken = jwt.sign(payload, process.env.ACCESS_SECRET, {
+  const accessToken = jwt.sign(payload, env.accessSecretKey, {
     expiresIn: "15m",
     issuer: "devtinder-app",
   });
 
-  const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET, {
+  const refreshToken = jwt.sign(payload, env.refreshSecretKey, {
     expiresIn: "1d",
     issuer: "devtinder-app",
   });

@@ -1,10 +1,10 @@
 const express = require("express");
-const connectDB = require("./config/database");
+const connectDB = require("./config/database.config");
 const app = express();
 const cookieParser = require("cookie-parser");
-const { connectRedis, redisClient } = require("./config/redis");
-const { authRouter } = require("./routes/auth");
-const { profileRouter } = require("./routes/profile");
+const { connectRedis, redisClient } = require("./config/redis.config");
+const { authRouter } = require("./routes/auth.route");
+const { profileRouter } = require("./routes/profile.route");
 
 app.use(express.json());
 app.use(cookieParser());

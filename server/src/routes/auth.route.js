@@ -2,12 +2,12 @@ const express = require("express");
 const {
   validateSignUpData,
   validateLoginData,
-} = require("../utils/validation");
+} = require("../utils/validation.util");
 const authRouter = express.Router();
 const bcrypt = require("bcrypt");
-const User = require("../models/user");
+const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
-const { env } = require("../config/env");
+const { env } = require("../config/env.config");
 const crypto = require("crypto");
 
 authRouter.post("/signup", async (req, res) => {
